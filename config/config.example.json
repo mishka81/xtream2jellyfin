@@ -1,0 +1,51 @@
+{
+  "provider1": {
+    "username": "your_username",
+    "password": "your_password",
+    "url": "http://your-xtream-server.com",
+    "interval": 360,
+    "category_name_regex": {
+      "^\\[.*\\]\\s*": "",
+      "\\s*\\[.*\\]$": ""
+    },
+    "libraryRefresh": {
+      "enabled": true,
+      "protocol": "http",
+      "hostname": "localhost",
+      "port": 8096,
+      "token": "your_jellyfin_api_token"
+    },
+    "settings": {
+      "live": {
+        "enabled": true,
+        "category_folder": true,
+        "use_server_info": false,
+        "name_regex": {
+          "^\\[.*\\]\\s*": "",
+          "\\s*\\[.*\\]$": ""
+        },
+        "exclude_categories": []
+      },
+      "movie": {
+        "enabled": true,
+        "category_folder": true,
+        "use_server_info": false,
+        "name_regex": {
+          "^\\[.*\\]\\s*": "",
+          "\\s*\\[.*\\]$": ""
+        },
+        "exclude_categories": []
+      },
+      "series": {
+        "enabled": true,
+        "category_folder": true,
+        "use_server_info": false,
+        "name_regex": {
+          "^\\[.*\\]\\s*": "",
+          "\\s*\\[.*\\]$": ""
+        },
+        "exclude_categories": []
+      }
+    }
+  }
+}
