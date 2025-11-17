@@ -1,23 +1,19 @@
 package uk.humbkr.xtream2jellyfin.streamhandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.slf4j.Logger;
 import uk.humbkr.xtream2jellyfin.common.*;
 import uk.humbkr.xtream2jellyfin.filemanager.FileManager;
 import uk.humbkr.xtream2jellyfin.filemanager.FileManagerUtils;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-@Slf4j
 public abstract class BaseStreamsHandler {
 
     protected final ObjectMapper objectMapper;
@@ -56,13 +52,13 @@ public abstract class BaseStreamsHandler {
 
     protected final boolean useCache = Constants.USE_CACHE;
 
+    private final Logger log;
+
     protected String providerUrl;
 
     protected Map<String, Object> data;
 
     protected Map<String, String> categories;
-
-    protected Map<String, Object> serverInfo;
 
     protected int processNumber = 0;
 
@@ -73,9 +69,9 @@ public abstract class BaseStreamsHandler {
     protected long processingStartTime = 0;
 
     @SuppressWarnings("unchecked")
-    public BaseStreamsHandler(Map<String, Object> appConfig,
-                              Map<String, Object> providerConfig,
-                              FileManager fileManager) {
+    public BaseStreamsHandler(Map<String, Object> appConfig, Map<String, Object> providerConfig, FileManager fileManager,
+                              Logger log) {
+        this.log = log;
         this.objectMapper = JsonUtils.getObjectMapper();
         this.httpClient = new OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
@@ -161,24 +157,41 @@ public abstract class BaseStreamsHandler {
     }
 
     protected void processStreams() {
-        List<Map<String, Object>> processableStreams = getStreams().stream()
-                .filter(this::canProcess)
-                .toList();
 
-        int processableStreamsCount = processableStreams.size();
+        // Get reference to streams list before removing from data map
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> allStreams = (List<Map<String, Object>>) data.remove(Constants.MEDIA_RESOLVER_STREAMS);
+
+        // Count processable streams first
+        int processableStreamsCount = allStreams.size();
+
         logInfo("Available streams for processing: " + processableStreamsCount);
 
-        data.remove(Constants.MEDIA_RESOLVER_STREAMS);
         resetCounters(processableStreamsCount);
 
-        for (Map<String, Object> stream : processableStreams) {
+        // Process streams one at a time, allowing GC to collect each stream after processing
+        Iterator<Map<String, Object>> streamsIterator = allStreams.iterator();
+        while (streamsIterator.hasNext()) {
+            Map<String, Object> stream = streamsIterator.next();
+
+            if (!canProcess(stream)) {
+                logInfo("Skipping stream: " + stream);
+                continue;
+            }
+
             try {
                 processItem(stream);
             } catch (Exception ex) {
                 logError("Failed to process " + getMediaType() + " stream, ID: " + stream + ", Error: " + ex.getMessage(), ex);
             }
+
             updateCounters();
+
+            streamsIterator.remove();
         }
+
+        // Clear the entire list to release all references
+        allStreams.clear();
     }
 
     protected boolean canProcess(Map<String, Object> streamInfo) {

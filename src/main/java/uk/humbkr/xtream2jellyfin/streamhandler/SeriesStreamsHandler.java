@@ -17,7 +17,7 @@ public class SeriesStreamsHandler extends BaseStreamsHandler {
     public SeriesStreamsHandler(Map<String, Object> appConfig,
                                 Map<String, Object> providerConfig,
                                 FileManager fileManager) {
-        super(appConfig, providerConfig, fileManager);
+        super(appConfig, providerConfig, fileManager, log);
     }
 
     @Override
