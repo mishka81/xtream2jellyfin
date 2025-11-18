@@ -7,7 +7,7 @@
 
     <groupId>com.xtream2jellyfin</groupId>
     <artifactId>xtream2jellyfin</artifactId>
-    <version>1.0.0</version>
+    <version>0.2.0</version>
     <packaging>jar</packaging>
 
     <name>xtream2jellyfin</name>
