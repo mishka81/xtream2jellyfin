@@ -4,36 +4,13 @@ import java.util.Map;
 
 public class Constants {
 
-    public static final String ENV_EXTRACT_ONLY = "EXTRACT_ONLY";
-
-    public static final String ENV_RUN_ONCE = "RUN_ONCE";
-
-    public static final String ENV_FILE_MANAGER_TYPE = "FILE_MANAGER_TYPE";
-
-    public static final String ENV_WRITE_METADATA_JSON = "WRITE_METADATA_JSON";
-
-    public static final String ENV_MEDIA_DIR = "MEDIA_DIR";
-
     // Configuration
-    public static final String CONFIG_FILE = "config/config.json";
-
-    public static final String XTREAM_USERNAME = "username";
-
-    public static final String XTREAM_PASSWORD = "password";
-
-    public static final String XTREAM_URL = "url";
-
-    public static final String XTREAM_SCAN_INTERVAL = "interval";
-
-    public static final String XTREAM_SETTINGS = "settings";
+    public static final String CONFIG_FILE = "config/config.yaml";
 
     // Directories
     public static final String CACHE_DIR = "cache";
 
     public static final String MEDIA_DIR = "media";
-
-    // File Settings
-    public static final String ENCODING_UTF8 = "UTF-8";
 
     // Scan Settings
     public static final int DEFAULT_SCAN_INTERVAL = 360; // 6 hours in minutes
@@ -43,8 +20,8 @@ public class Constants {
     // Character Cleaning
     public static final Map<String, String> CLEAN_CHARS = Map.of(
             "&", "and",
-            ":", "",
-            "?", "",
+//            ":", "",
+//            "?", "",
             "/", "-",
             "*", "_",
             "\"", "'",

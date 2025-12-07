@@ -5,9 +5,10 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
-import uk.humbkr.xtream2jellyfin.common.Constants;
 import uk.humbkr.xtream2jellyfin.common.XtreamEndpoint;
+import uk.humbkr.xtream2jellyfin.config.GlobalSettings;
+import uk.humbkr.xtream2jellyfin.config.JellyfinConfig;
+import uk.humbkr.xtream2jellyfin.config.XtreamProviderConfig;
 import uk.humbkr.xtream2jellyfin.filemanager.CachedFileManager;
 import uk.humbkr.xtream2jellyfin.filemanager.FileManager;
 import uk.humbkr.xtream2jellyfin.filemanager.SimpleFileManager;
@@ -44,69 +45,51 @@ public class XtreamProcessor {
 
     private final boolean runOnce;
 
-    public XtreamProcessor(String providerName,
-                           Map<String, Object> config,
-                           boolean extractOnly,
-                           boolean runOnce,
-                           boolean writeMetadataJson) {
+    public XtreamProcessor(XtreamProviderConfig config, GlobalSettings globalSettings) {
+
+        this.providerName = config.getName();
 
         log.info("[{}] Starting", providerName);
-
-        this.providerName = providerName;
         this.httpClient = new OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
                 .build();
 
-        Map<String, Object> jellyfinConfig = getJellyFinConfig(config);
+        JellyfinConfig jellyfinConfig = config.getLibraryRefresh();
 
-        String jellyFinProtocol = (String) jellyfinConfig.get("protocol");
-        String jellyFinHostname = (String) jellyfinConfig.get("hostname");
-        String jellyFinPort = String.valueOf(jellyfinConfig.get("port"));
+        if (jellyfinConfig != null) {
+            this.jellyfinToken = jellyfinConfig.getToken();
+            this.postProcessingEnabled = jellyfinConfig.isEnabled();
+            this.postProcessingUrl = jellyfinConfig.getProtocol() + "://" +
+                    jellyfinConfig.getHostname() + ":" + jellyfinConfig.getPort();
+        } else {
+            this.jellyfinToken = null;
+            this.postProcessingEnabled = false;
+            this.postProcessingUrl = null;
+        }
 
-        this.jellyfinToken = (String) jellyfinConfig.get("token");
-        this.postProcessingEnabled = (boolean) jellyfinConfig.getOrDefault("enabled", false);
+        String username = config.getUsername();
+        String password = config.getPassword();
 
-        this.postProcessingUrl = jellyFinProtocol + "://" + jellyFinHostname + ":" + jellyFinPort;
-
-        String username = (String) config.get(Constants.XTREAM_USERNAME);
-        String password = (String) config.get(Constants.XTREAM_PASSWORD);
-
-        String scanIntervalStr = String.valueOf(config.getOrDefault(Constants.XTREAM_SCAN_INTERVAL, Constants.DEFAULT_SCAN_INTERVAL));
-        this.scanInterval = Integer.parseInt(scanIntervalStr);
+        this.scanInterval = config.getInterval();
 
         this.ready = username != null && password != null;
 
-        String fileManagerType = System.getenv(Constants.ENV_FILE_MANAGER_TYPE);
+        String fileManagerType = globalSettings.getFileManagerType();
         if (StringUtils.isBlank(fileManagerType) || "simple".equalsIgnoreCase(fileManagerType)) {
-            this.fileManager = new SimpleFileManager(providerName);
+            this.fileManager = new SimpleFileManager(providerName, globalSettings.getMediaDir());
             log.info("[{}] Using SimpleFileManager", providerName);
         } else {
-            this.fileManager = new CachedFileManager(providerName);
+            this.fileManager = new CachedFileManager(providerName, globalSettings.getMediaDir());
             log.info("[{}] Using CachedFileManager", providerName);
         }
 
-        Map<String, Object> appConfig = Map.of(
-                "name", providerName,
-                "extract_only", extractOnly,
-                "write_metadata_json", writeMetadataJson
-        );
-
         this.streamHandlers = new ArrayList<>();
-        streamHandlers.add(new LiveStreamsHandler(appConfig, config, fileManager));
-        streamHandlers.add(new SeriesStreamsHandler(appConfig, config, fileManager));
-        streamHandlers.add(new MoviesStreamsHandler(appConfig, config, fileManager));
+        streamHandlers.add(new LiveStreamsHandler(config, fileManager, globalSettings));
+        streamHandlers.add(new SeriesStreamsHandler(config, fileManager, globalSettings));
+        streamHandlers.add(new MoviesStreamsHandler(config, fileManager, globalSettings));
 
-        this.runOnce = runOnce;
-    }
-
-    @NotNull
-    private static Map<String, Object> getJellyFinConfig(Map<String, Object> config) {
-        Map<String, Object> jellyfCfg = (Map<String, Object>) config.get("libraryRefresh");
-        if (jellyfCfg == null) {
-            jellyfCfg = Map.of();
-        }
-        return jellyfCfg;
+        this.runOnce = globalSettings.isRunOnce();
     }
 
     public void processStreams() {

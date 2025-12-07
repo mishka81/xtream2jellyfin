@@ -2,29 +2,19 @@ package uk.humbkr.xtream2jellyfin;
 
 import lombok.extern.slf4j.Slf4j;
 import uk.humbkr.xtream2jellyfin.common.Constants;
-import uk.humbkr.xtream2jellyfin.common.JsonUtils;
+import uk.humbkr.xtream2jellyfin.common.YamlUtils;
+import uk.humbkr.xtream2jellyfin.config.AppConfig;
+import uk.humbkr.xtream2jellyfin.config.GlobalSettings;
+import uk.humbkr.xtream2jellyfin.config.XtreamProviderConfig;
 import uk.humbkr.xtream2jellyfin.streamhandler.XtreamProcessor;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 public class Xtream2JellyfinApp {
-
-    private final boolean extractOnly;
-
-    private final boolean runOnce;
-
-    private final boolean writeMetadataJson;
-
-    public Xtream2JellyfinApp() {
-        this.extractOnly = Boolean.parseBoolean(System.getenv(Constants.ENV_EXTRACT_ONLY));
-        this.runOnce = Boolean.parseBoolean(System.getenv(Constants.ENV_RUN_ONCE));
-        this.writeMetadataJson = Boolean.parseBoolean(System.getenv(Constants.ENV_WRITE_METADATA_JSON));
-    }
 
     public static void main(String[] args) {
         new Xtream2JellyfinApp().run();
@@ -33,15 +23,13 @@ public class Xtream2JellyfinApp {
     public void run() {
         log.info("Starting xtream2jellyfin");
 
-        Map<String, Object> config = this.readConfig();
+        AppConfig appConfig = this.readConfig();
         List<Thread> threads = new ArrayList<>();
 
-        for (Map.Entry<String, Object> entry : config.entrySet()) {
-            String providerName = entry.getKey();
-            @SuppressWarnings("unchecked")
-            Map<String, Object> providerConfig = (Map<String, Object>) entry.getValue();
+        for (XtreamProviderConfig providerConfig : appConfig.getProviders().values()) {
+            String providerName = providerConfig.getName();
 
-            Thread thread = new Thread(() -> processProviderStreams(providerName, providerConfig));
+            Thread thread = new Thread(() -> processProviderStreams(providerConfig, appConfig.getGlobalSettings()));
             thread.setName("provider-" + providerName);
             threads.add(thread);
             thread.start();
@@ -60,22 +48,22 @@ public class Xtream2JellyfinApp {
         log.info("xtream2jellyfin stopped");
     }
 
-    private Map<String, Object> readConfig() {
+    private AppConfig readConfig() {
         File configFile = new File(Constants.CONFIG_FILE);
         if (configFile.exists()) {
             try {
-                //noinspection unchecked
-                return JsonUtils.getObjectMapper().readValue(configFile, Map.class);
+                return YamlUtils.getObjectMapper().readValue(configFile, AppConfig.class);
             } catch (IOException e) {
-                log.error("Failed to load config file", e);
+                log.error("Failed to load config file: {}", e.getMessage());
+                log.debug("", e);
             }
         }
-        log.warn("Failed to load config file");
-        return Map.of();
+        log.error("Config file not found: {}", Constants.CONFIG_FILE);
+        return new AppConfig();
     }
 
-    private void processProviderStreams(String providerName, Map<String, Object> config) {
-        new XtreamProcessor(providerName, config, extractOnly, runOnce, writeMetadataJson).processStreams();
+    private void processProviderStreams(XtreamProviderConfig config, GlobalSettings globalSettings) {
+        new XtreamProcessor(config, globalSettings).processStreams();
     }
 
 }

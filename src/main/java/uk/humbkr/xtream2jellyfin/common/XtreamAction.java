@@ -1,6 +1,10 @@
 package uk.humbkr.xtream2jellyfin.common;
 
+import lombok.Getter;
+
+@Getter
 public enum XtreamAction {
+
     AUTHENTICATE(""),
     LIVE_CATEGORIES("get_live_categories"),
     LIVE_STREAMS("get_live_streams"),
@@ -16,10 +20,6 @@ public enum XtreamAction {
 
     XtreamAction(String value) {
         this.value = value;
-    }
-
-    public String getValue() {
-        return value;
     }
 
     @Override

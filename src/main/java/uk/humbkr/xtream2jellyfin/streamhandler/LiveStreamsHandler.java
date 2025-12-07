@@ -3,6 +3,8 @@ package uk.humbkr.xtream2jellyfin.streamhandler;
 import lombok.extern.slf4j.Slf4j;
 import uk.humbkr.xtream2jellyfin.common.MediaType;
 import uk.humbkr.xtream2jellyfin.common.XtreamEndpoint;
+import uk.humbkr.xtream2jellyfin.config.GlobalSettings;
+import uk.humbkr.xtream2jellyfin.config.XtreamProviderConfig;
 import uk.humbkr.xtream2jellyfin.filemanager.FileManager;
 
 import java.time.Instant;
@@ -13,10 +15,8 @@ public class LiveStreamsHandler extends BaseStreamsHandler {
 
     private String epgData;
 
-    public LiveStreamsHandler(Map<String, Object> appConfig,
-                              Map<String, Object> providerConfig,
-                              FileManager fileManager) {
-        super(appConfig, providerConfig, fileManager, log);
+    public LiveStreamsHandler(XtreamProviderConfig providerConfig, FileManager fileManager, GlobalSettings globalSettings) {
+        super(providerConfig, fileManager, globalSettings, log);
     }
 
     @Override

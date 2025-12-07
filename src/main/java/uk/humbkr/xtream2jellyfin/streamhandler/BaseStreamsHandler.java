@@ -6,6 +6,9 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.slf4j.Logger;
 import uk.humbkr.xtream2jellyfin.common.*;
+import uk.humbkr.xtream2jellyfin.config.GlobalSettings;
+import uk.humbkr.xtream2jellyfin.config.MediaSettings;
+import uk.humbkr.xtream2jellyfin.config.XtreamProviderConfig;
 import uk.humbkr.xtream2jellyfin.filemanager.FileManager;
 import uk.humbkr.xtream2jellyfin.filemanager.FileManagerUtils;
 
@@ -35,8 +38,6 @@ public abstract class BaseStreamsHandler {
     protected final List<String> excludeCategories;
 
     protected final boolean categoryFolder;
-
-    protected final boolean extractOnly;
 
     protected final boolean writeMetadataJson;
 
@@ -68,9 +69,8 @@ public abstract class BaseStreamsHandler {
 
     protected long processingStartTime = 0;
 
-    @SuppressWarnings("unchecked")
-    public BaseStreamsHandler(Map<String, Object> appConfig, Map<String, Object> providerConfig, FileManager fileManager,
-                              Logger log) {
+    public BaseStreamsHandler(XtreamProviderConfig providerConfig, FileManager fileManager,
+                              GlobalSettings globalSettings, Logger log) {
         this.log = log;
         this.objectMapper = JsonUtils.getObjectMapper();
         this.httpClient = new OkHttpClient.Builder()
@@ -79,35 +79,39 @@ public abstract class BaseStreamsHandler {
                 .build();
 
         this.fileManager = fileManager;
-        this.extractOnly = (boolean) appConfig.getOrDefault("extract_only", false);
-        this.writeMetadataJson = (boolean) appConfig.getOrDefault("write_metadata_json", false);
-        this.providerName = (String) appConfig.get("name");
+        this.providerName = Objects.requireNonNull(providerConfig.getName());
+        this.writeMetadataJson = globalSettings.isWriteMetadataJson();
 
-        this.username = (String) providerConfig.get(Constants.XTREAM_USERNAME);
-        this.password = (String) providerConfig.get(Constants.XTREAM_PASSWORD);
-        this.providerUrl = (String) providerConfig.get(Constants.XTREAM_URL);
-        this.categoryNameRegex = (Map<String, String>) providerConfig.getOrDefault("category_name_regex", new HashMap<>());
+        this.username = providerConfig.getUsername();
+        this.password = providerConfig.getPassword();
+        this.providerUrl = providerConfig.getUrl();
+        this.categoryNameRegex = providerConfig.getCategoryNameRegex();
 
         this.cacheDir = Constants.CACHE_DIR + "/" + providerName;
 
-        String baseMediaDir = System.getenv(Constants.ENV_MEDIA_DIR);
-        if (baseMediaDir == null || baseMediaDir.isEmpty()) {
-            baseMediaDir = Constants.MEDIA_DIR;
-        }
+        String baseMediaDir = globalSettings.getMediaDir();
         this.mediaDir = baseMediaDir + "/" + providerName + "/" + getMediaType();
 
-        Map<String, Object> settings = (Map<String, Object>) providerConfig.get(Constants.XTREAM_SETTINGS);
-        Map<String, Object> mediaSettings = (Map<String, Object>) settings.get(getMediaType().toString());
+        MediaSettings mediaSettings = getMediaSettingsForType(providerConfig);
 
-        this.useServerInfo = (boolean) mediaSettings.getOrDefault("use_server_info", false);
-        this.nameRegex = (Map<String, String>) mediaSettings.getOrDefault("name_regex", new HashMap<>());
-        this.excludeCategories = (List<String>) mediaSettings.getOrDefault("exclude_categories", new ArrayList<>());
-        this.categoryFolder = (boolean) mediaSettings.getOrDefault("category_folder", true);
-        this.enabled = (boolean) mediaSettings.getOrDefault("enabled", false);
+        this.useServerInfo = mediaSettings.isUseServerInfo();
+        this.nameRegex = mediaSettings.getNameRegex();
+        this.excludeCategories = mediaSettings.getExcludeCategories();
+        this.categoryFolder = mediaSettings.isCategoryFolder();
+        this.enabled = mediaSettings.isEnabled();
 
         this.resolvers = Constants.MEDIA_RESOLVERS.get(getMediaType());
         this.data = new HashMap<>();
         this.categories = new HashMap<>();
+    }
+
+    private MediaSettings getMediaSettingsForType(XtreamProviderConfig config) {
+        MediaType type = getMediaType();
+        return switch (type) {
+            case LIVE -> config.getLive();
+            case MOVIE -> config.getMovie();
+            case SERIES -> config.getSeries();
+        };
     }
 
     public abstract MediaType getMediaType();
@@ -221,8 +225,7 @@ public abstract class BaseStreamsHandler {
 
             long executionTime = System.currentTimeMillis() - startTime;
 
-            logInfo(String.format("Loaded %d lists, Duration: %.3f seconds",
-                    allDataPoints.size(), executionTime / 1000.0));
+            logInfo(String.format("Loaded %d lists, Duration: %.3f seconds", allDataPoints.size(), executionTime / 1000.0));
 
         } catch (Exception ex) {
             logError("Failed to load data: " + ex.getMessage(), ex);
@@ -313,6 +316,7 @@ public abstract class BaseStreamsHandler {
                 textNew = textNew.trim();
 
                 if (!text.equals(textNew)) {
+                    logInfo(String.format("Cleaned category name: '%s' -> '%s", text, textNew));
                     text = textNew;
                 }
             }
@@ -334,8 +338,8 @@ public abstract class BaseStreamsHandler {
     }
 
     protected String buildUrl(XtreamEndpoint endpoint, XtreamAction action, String contextId) {
-        String credentials = Constants.XTREAM_USERNAME + "=" + username + "&" +
-                Constants.XTREAM_PASSWORD + "=" + password;
+        String credentials = "username" + "=" + username + "&" +
+                "password" + "=" + password;
         String url = providerUrl + "/" + endpoint + ".php?" + credentials;
 
         if (action != null && endpoint == XtreamEndpoint.PLAYER) {
@@ -465,6 +469,10 @@ public abstract class BaseStreamsHandler {
 
     protected void logDebug(String message) {
         log.debug("[{}::{}] {}", providerName, getMediaType(), message);
+    }
+
+    protected void logTrace(String message) {
+        log.trace("[{}::{}] {}", providerName, getMediaType(), message);
     }
 
     private String capitalize(String str) {

@@ -1,0 +1,62 @@
+app:
+  runOnce: false
+  # TODO scheduled runs
+  fileManagerType: "simple"
+  mediaDir: "media"
+  writeMetadataJson: false
+
+providers:
+  iptvxvod:
+    url: "http://fhd.iptvxvod.com:2103"
+    username: "kUXDbY9F"
+    password: "pCB2zWR"
+    interval: 360
+    category_name_regex: {}
+#      "^[^\\|]*.[\\|].": ""
+#      "^[^\\-]*.[\\-].": ""
+    settings:
+      live:
+        enabled: false
+        name_regex:
+          "^[^\\|]*.[\\|].": ""
+          "^[^\\-]*.[\\-].": ""
+        exclude_categories: null
+      movie:
+        enabled: false
+        category_folder: true
+        name_regex:
+          "FHD 2024": ""
+          "FHD 2025": ""
+          " FHD": ""
+          " \\(MULTI\\) \\d{4}": ""
+          " \\(3D\\) \\d{4}": ""
+          " \\(FR\\) \\d{4}": ""
+          " \\(MULTI\\)": ""
+          " \\(3D\\)": ""
+          " \\(FR\\)": ""
+          " \\(True FR\\)": ""
+          " \\(VOST FR\\)": ""
+          " HD \\d{4}": ""
+          " FHD \\d{4}": ""
+          " SD \\d{4}": ""
+        exclude_categories: ["183"]
+      series:
+        enabled: true
+        category_folder: true
+        name_regex:
+          "FHD 2024": ""
+          "FHD 2025": ""
+          " FHD": ""
+          " \\(MULTI\\) \\d{4}": ""
+          " \\(3D\\) \\d{4}": ""
+          " \\(FR\\) \\d{4}": ""
+          " \\(MULTI\\)": ""
+          " \\(3D\\)": ""
+          " \\(FR\\)": ""
+          " \\(True FR\\)": ""
+          " \\(VOST FR\\)": ""
+          " HD \\d{4}": ""
+          " FHD \\d{4}": ""
+          " SD \\d{4}": ""
+          " HD$": ""
+        exclude_categories: ["164", "190", "225", "230", "231", "null"]

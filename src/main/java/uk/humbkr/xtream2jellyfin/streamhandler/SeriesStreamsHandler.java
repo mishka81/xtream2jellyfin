@@ -1,9 +1,13 @@
 package uk.humbkr.xtream2jellyfin.streamhandler;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import uk.humbkr.xtream2jellyfin.common.MediaType;
 import uk.humbkr.xtream2jellyfin.common.XtreamAction;
 import uk.humbkr.xtream2jellyfin.common.XtreamEndpoint;
+import uk.humbkr.xtream2jellyfin.config.GlobalSettings;
+import uk.humbkr.xtream2jellyfin.config.XtreamProviderConfig;
 import uk.humbkr.xtream2jellyfin.filemanager.FileManager;
 
 import java.time.Instant;
@@ -14,10 +18,8 @@ import java.util.Map;
 @Slf4j
 public class SeriesStreamsHandler extends BaseStreamsHandler {
 
-    public SeriesStreamsHandler(Map<String, Object> appConfig,
-                                Map<String, Object> providerConfig,
-                                FileManager fileManager) {
-        super(appConfig, providerConfig, fileManager, log);
+    public SeriesStreamsHandler(XtreamProviderConfig providerConfig, FileManager fileManager, GlobalSettings globalSettings) {
+        super(providerConfig, fileManager, globalSettings, log);
     }
 
     @Override
@@ -38,6 +40,10 @@ public class SeriesStreamsHandler extends BaseStreamsHandler {
 
         seriesName = cleanNameRegex(seriesName);
         String seriesNameClean = cleanName(seriesName);
+
+        if (!Strings.CS.equals(seriesName, seriesNameClean)) {
+            logInfo("Cleaned series name: '" + seriesName + "' to '" + seriesNameClean + "'");
+        }
 
         List<String> basePathParts = new ArrayList<>();
         basePathParts.add(mediaDir);
@@ -75,18 +81,13 @@ public class SeriesStreamsHandler extends BaseStreamsHandler {
 
                 String streamInfoPath = getStreamInfoPath(stream);
 
-                log.debug("processing series stream: " + streamInfoPath);
+                log.debug("processing series stream: {}", streamInfoPath);
 
                 if (writeMetadataJson) {
                     addFile(streamInfoPath, stream, date);
                 }
 
-                String[] basePathParts = streamInfoPath.split("/");
-                List<String> basePathList = new ArrayList<>();
-                for (int i = 0; i < basePathParts.length - 1; i++) {
-                    basePathList.add(basePathParts[i]);
-                }
-                String basePath = String.join("/", basePathList);
+                String basePath = StringUtils.substringBeforeLast(streamInfoPath, "/");
 
                 @SuppressWarnings("unchecked")
                 Map<String, List<Map<String, Object>>> episodesData =
@@ -109,8 +110,7 @@ public class SeriesStreamsHandler extends BaseStreamsHandler {
     }
 
     private void processEpisode(String basePath, Map<String, Object> episode) {
-        String[] basePathParts = basePath.split("/");
-        String seriesNameClean = basePathParts[basePathParts.length - 1];
+        String seriesName = StringUtils.substringAfterLast(basePath, "/");
 
         try {
             Object streamIdObj = episode.get("id");
@@ -130,7 +130,7 @@ public class SeriesStreamsHandler extends BaseStreamsHandler {
             String seasonPad = String.format("%02d", seasonNumber);
             String episodeShort = String.format("%02d", episodeNumber);
 
-            String episodeFile = String.format("%s - S%sE%s", seriesNameClean, seasonPad, episodeShort);
+            String episodeFile = String.format("%s - S%sE%s", seriesName, seasonPad, episodeShort);
 
             String seasonDir = "Season " + seasonPad;
 
@@ -143,7 +143,7 @@ public class SeriesStreamsHandler extends BaseStreamsHandler {
             addFile(episodeFilePath, episodeStreamUrl, date);
 
         } catch (Exception ex) {
-            logError("Failed to process series, Series: " + seriesNameClean +
+            logError("Failed to process series, Series: " + seriesName +
                     ", Episode: " + episode + ", Error: " + ex.getMessage(), ex);
         }
     }

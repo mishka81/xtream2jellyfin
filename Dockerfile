@@ -22,11 +22,6 @@ RUN mkdir -p /app/config /app/cache /app/media
 
 COPY --from=builder /build/target/xtream2jellyfin-${VERSION}-jar-with-dependencies.jar /app/xtream2jellyfin.jar
 
-ENV EXTRACT_ONLY=false
-ENV RUN_ONCE=false
-ENV WRITE_METADATA_JSON=false
-ENV FILE_MANAGER_TYPE=simple
-
 VOLUME ["/app/config", "/app/cache", "/app/media"]
 
 CMD ["java", "-jar", "/app/xtream2jellyfin.jar"]

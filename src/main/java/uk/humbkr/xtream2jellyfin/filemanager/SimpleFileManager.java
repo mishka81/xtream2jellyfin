@@ -2,7 +2,6 @@ package uk.humbkr.xtream2jellyfin.filemanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import uk.humbkr.xtream2jellyfin.common.Constants;
 import uk.humbkr.xtream2jellyfin.common.JsonUtils;
 
 import java.io.IOException;
@@ -20,14 +19,9 @@ public class SimpleFileManager implements FileManager {
 
     private final String mediaPath;
 
-    public SimpleFileManager(String providerName) {
+    public SimpleFileManager(String providerName, String mediaDir) {
         this.objectMapper = JsonUtils.getObjectMapper();
-
-        String baseMediaDir = System.getenv(Constants.ENV_MEDIA_DIR);
-        if (baseMediaDir == null || baseMediaDir.isEmpty()) {
-            baseMediaDir = Constants.MEDIA_DIR;
-        }
-        this.mediaPath = baseMediaDir + "/" + providerName;
+        this.mediaPath = mediaDir + "/" + providerName;
     }
 
     @Override

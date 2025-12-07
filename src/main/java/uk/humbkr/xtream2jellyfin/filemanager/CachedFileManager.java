@@ -24,7 +24,7 @@ public class CachedFileManager implements FileManager {
 
     private Map<String, Map<String, String>> filesDb;
 
-    public CachedFileManager(String providerName) {
+    public CachedFileManager(String providerName, String baseMediaDir) {
         this.objectMapper = JsonUtils.getObjectMapper();
         this.filePath = Constants.CACHE_DIR + "/" + providerName + "/files.json";
         this.filesDb = new HashMap<>();

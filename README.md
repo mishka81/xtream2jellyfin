@@ -39,68 +39,72 @@ This will create a JAR file with all dependencies in `target/xtream2jellyfin-1.0
 
 1. Copy the example configuration file:
 ```bash
-cp config/config.example.json config/config.json
+cp config/config.example.yaml config/config.yaml
 ```
 
-2. Edit `config/config.json` with your provider details:
+2. Edit `config/config.yaml` with your settings:
 
-```json
-{
-  "provider1": {
-    "username": "your_username",
-    "password": "your_password",
-    "url": "http://your-xtream-server.com",
-    "interval": 360,
-    "category_name_regex": {
-      "^\\[.*\\]\\s*": "",
+```yaml
+app:
+  runOnce: false              # run once and exit (default: false)
+  fileManagerType: "simple"   # file manager: "simple" or "cached" (default: "simple")
+  mediaDir: "media"           # base media output directory (default: "media")
+  writeMetadataJson: false    # write metadata JSON files (default: false)
+
+providers:
+  provider1:
+    username: "your_username"
+    password: "your_password"
+    url: "http://your-xtream-server.com"
+    interval: 360
+    category_name_regex:
+      "^\\[.*\\]\\s*": ""
       "\\s*\\[.*\\]$": ""
-    },
-    "libraryRefresh": {
-      "enabled": true,
-      "protocol": "http",
-      "hostname": "localhost",
-      "port": 8096,
-      "token": "your_jellyfin_api_token"
-    },
-    "settings": {
-      "live": {
-        "enabled": true,
-        "category_folder": true,
-        "use_server_info": false,
-        "name_regex": {
-          "^\\[.*\\]\\s*": "",
+    libraryRefresh:
+      enabled: true
+      protocol: "http"
+      hostname: "localhost"
+      port: 8096
+      token: "your_jellyfin_api_token"
+    settings:
+      live:
+        enabled: true
+        category_folder: true
+        use_server_info: false
+        name_regex:
+          "^\\[.*\\]\\s*": ""
           "\\s*\\[.*\\]$": ""
-        },
-        "exclude_categories": []
-      },
-      "movie": {
-        "enabled": true,
-        "category_folder": true,
-        "use_server_info": false,
-        "name_regex": {
-          "^\\[.*\\]\\s*": "",
+        exclude_categories: []
+      movie:
+        enabled: true
+        category_folder: true
+        use_server_info: false
+        name_regex:
+          "^\\[.*\\]\\s*": ""
           "\\s*\\[.*\\]$": ""
-        },
-        "exclude_categories": []
-      },
-      "series": {
-        "enabled": true,
-        "category_folder": true,
-        "use_server_info": false,
-        "name_regex": {
-          "^\\[.*\\]\\s*": "",
+        exclude_categories: []
+      series:
+        enabled: true
+        category_folder: true
+        use_server_info: false
+        name_regex:
+          "^\\[.*\\]\\s*": ""
           "\\s*\\[.*\\]$": ""
-        },
-        "exclude_categories": []
-      }
-    }
-  }
-}
+        exclude_categories: []
 ```
 
 ### Configuration Options
 
-#### Provider-Level Settings
+#### Global Application Settings (`app`)
+
+- `runOnce`: run once and exit instead of continuous scanning (default: `false`)
+- `fileManagerType`: file manager implementation - `simple` or `cached` (default: `simple`)
+- `mediaDir`: base media output directory (default: `media`)
+- `writeMetadataJson`: write metadata JSON files for movies and series (default: `false`)
+
+#### Provider Settings (`providers`)
+
+Each provider can have the following settings:
 
 - `username`/`password`: Xtream provider credentials
 - `url`: Xtream provider URL
@@ -127,18 +131,7 @@ cp config/config.example.json config/config.json
 java -jar target/xtream2jellyfin-1.0.0-jar-with-dependencies.jar
 ```
 
-### Environment Variables
-
-- `EXTRACT_ONLY`: set to `true` to extract without processing (default: `false`)
-- `RUN_ONCE`: set to `true` to run once and exit instead of continuous scanning (default: `false`)
-- `WRITE_METADATA_JSON`: set to `true` to write metadata JSON files for movies and series (default: `false`)
-- `MEDIA_DIR`: custom media output directory (default: `media`)
-- `FILE_MANAGER_TYPE`: file manager implementation - `simple` or `cached` (default: `simple`)
-
-Example:
-```bash
-RUN_ONCE=true WRITE_METADATA_JSON=true java -jar target/xtream2jellyfin-1.0.0-jar-with-dependencies.jar
-```
+All configuration is now centralized in `config/config.yaml`. No environment variables are needed.
 
 ## Output Structure
 
@@ -170,3 +163,5 @@ Build and run using the provided Dockerfile:
 docker build -t xtream2jellyfin .
 docker run -v $(pwd)/config:/app/config -v $(pwd)/media:/app/media xtream2jellyfin
 ```
+
+All configuration is managed through the `config/config.yaml` file mounted as a volume.
