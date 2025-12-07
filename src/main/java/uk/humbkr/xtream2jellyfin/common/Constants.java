@@ -20,8 +20,8 @@ public class Constants {
     // Character Cleaning
     public static final Map<String, String> CLEAN_CHARS = Map.of(
             "&", "and",
-//            ":", "",
-//            "?", "",
+            ":", "",
+            "?", "",
             "/", "-",
             "*", "_",
             "\"", "'",
