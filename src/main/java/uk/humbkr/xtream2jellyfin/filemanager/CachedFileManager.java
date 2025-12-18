@@ -1,9 +1,7 @@
 package uk.humbkr.xtream2jellyfin.filemanager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import uk.humbkr.xtream2jellyfin.constant.Constants;
-import uk.humbkr.xtream2jellyfin.util.JsonUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -13,26 +11,34 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
-public class CachedFileManager implements FileManager {
+public class CachedFileManager extends BaseFileManager implements FileManager {
 
-    private final ObjectMapper objectMapper;
-
-    private final String filePath;
+    private final String filesDbPath;
 
     private Map<String, Map<String, String>> filesDb;
 
-    public CachedFileManager(String providerName, String baseMediaDir) {
-        this.objectMapper = JsonUtils.getObjectMapper();
-        this.filePath = Constants.CACHE_DIR + "/" + providerName + "/files.json";
+    // Stale file tracking
+    private Set<String> trackedFiles;
+
+    private Set<String> staleFiles;
+
+    public CachedFileManager(String rootDir, @NonNull String cacheDir) {
+        super(rootDir);
+        this.filesDbPath = cacheDir + "/files.json";
         this.filesDb = new HashMap<>();
+        this.trackedFiles = new HashSet<>();
+        this.staleFiles = new HashSet<>();
     }
 
     @Override
-    public void onProcessStart() {
-        Object fileDb = FileManagerUtils.get(filePath, null);
+    public void initialize() {
+        // Load existing database
+        Object fileDb = FileManagerUtils.get(filesDbPath, null);
         if (fileDb != null) {
             try {
                 @SuppressWarnings("unchecked")
@@ -43,25 +49,55 @@ public class CachedFileManager implements FileManager {
                 this.filesDb = new HashMap<>();
             }
         }
+
+        // Initialize stale file tracking
+        // Mark all previously known files as potentially stale
+        this.staleFiles = new HashSet<>(filesDb.keySet());
+        this.trackedFiles = new HashSet<>();
+
+        log.debug("Loaded {} files from cache database, {} marked as potentially stale",
+                filesDb.size(), staleFiles.size());
     }
 
     @Override
-    public void onProcessEnd() {
+    public void complete() {
+        // Clean up stale files first
+        cleanupStaleFiles();
+
+        // Update database to contain only files from current run
+        Map<String, Map<String, String>> updatedDb = new HashMap<>();
+        for (String trackedFile : trackedFiles) {
+            if (filesDb.containsKey(trackedFile)) {
+                updatedDb.put(trackedFile, filesDb.get(trackedFile));
+            }
+        }
+        this.filesDb = updatedDb;
+
+        // Save updated database
         try {
-            Path path = Paths.get(filePath);
+            Path path = Paths.get(filesDbPath);
             FileManagerUtils.prepareDirectory(path.getParent().toString());
 
             String json = objectMapper.writeValueAsString(filesDb);
             Files.writeString(path, json, StandardCharsets.UTF_8);
 
-            filesDb = new HashMap<>();
+            log.debug("Saved {} files to cache database", filesDb.size());
         } catch (IOException e) {
             log.error("Failed to update database", e);
         }
+
+        // Reset tracking sets for next run
+        trackedFiles.clear();
+        staleFiles.clear();
+        filesDb = new HashMap<>();
     }
 
     @Override
     public void save(String path, Object content, String date) {
+        // Mark file as active in current run
+        trackedFiles.add(path);
+        staleFiles.remove(path);
+
         try {
             String contentStr = objectMapper.writeValueAsString(content);
             byte[] contentBytes = contentStr.getBytes(StandardCharsets.UTF_8);
@@ -95,6 +131,77 @@ public class CachedFileManager implements FileManager {
             }
         } catch (IOException e) {
             log.error("Failed to save file: {}", path, e);
+        }
+    }
+
+    private void cleanupStaleFiles() {
+        if (staleFiles.isEmpty()) {
+            return;
+        }
+
+        int deletedCount = 0;
+        int failedCount = 0;
+
+        log.info("Cleaning up {} stale files...", staleFiles.size());
+
+        for (String stalePath : staleFiles) {
+            try {
+                Path file = Paths.get(stalePath);
+                if (Files.exists(file)) {
+                    Files.delete(file);
+                    deletedCount++;
+                    log.debug("Deleted stale file: {}", stalePath);
+                } else {
+                    log.debug("Stale file already missing: {}", stalePath);
+                }
+            } catch (IOException e) {
+                failedCount++;
+                log.warn("Failed to delete stale file: {}", stalePath, e);
+            }
+        }
+
+        if (deletedCount > 0) {
+            log.info("Successfully deleted {} stale files", deletedCount);
+        }
+        if (failedCount > 0) {
+            log.warn("Failed to delete {} stale files", failedCount);
+        }
+
+        // Clean up empty directories
+        cleanupEmptyDirectories();
+    }
+
+    private void cleanupEmptyDirectories() {
+        try {
+            Path rootPath = Paths.get(rootDir);
+            if (!Files.exists(rootPath)) {
+                return;
+            }
+
+            // Walk the directory tree and collect directories in reverse depth order
+            // This ensures we process child directories before parent directories
+            Files.walk(rootPath)
+                    .filter(Files::isDirectory)
+                    .filter(path -> !path.equals(rootPath)) // Don't delete the root directory
+                    .sorted((p1, p2) -> Integer.compare(p2.getNameCount(), p1.getNameCount()))
+                    .forEach(this::deleteIfEmpty);
+
+        } catch (IOException e) {
+            log.warn("Failed to cleanup empty directories", e);
+        }
+    }
+
+    private void deleteIfEmpty(Path directory) {
+        try {
+            // Check if directory is empty
+            try (var stream = Files.list(directory)) {
+                if (stream.findFirst().isEmpty()) {
+                    Files.delete(directory);
+                    log.debug("Deleted empty directory: {}", directory);
+                }
+            }
+        } catch (IOException e) {
+            log.debug("Could not delete directory: {}", directory, e);
         }
     }
 

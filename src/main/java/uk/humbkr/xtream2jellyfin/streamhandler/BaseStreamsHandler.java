@@ -318,8 +318,9 @@ public abstract class BaseStreamsHandler {
 
             long executionTime = System.currentTimeMillis() - startTime;
 
-            logInfo(String.format("Loaded %d categories, Duration: %.3f seconds",
-                    getCategories().size(), executionTime / 1000.0));
+            logDebug("Categories loaded: " + categories);
+
+            logInfo(String.format("Loaded %d categories, Duration: %.3f seconds", getCategories().size(), executionTime / 1000.0));
 
         } catch (Exception ex) {
             logError("Failed to load categories: " + ex.getMessage(), ex);

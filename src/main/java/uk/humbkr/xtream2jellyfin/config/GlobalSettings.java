@@ -15,6 +15,9 @@ public class GlobalSettings {
     @JsonProperty("media_dir")
     private String mediaDir = "media";
 
+    @JsonProperty("cache_dir")
+    private String cacheDir = "cache";
+
     @JsonProperty("write_metadata_json")
     private boolean writeMetadataJson = false;
 

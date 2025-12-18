@@ -1,7 +1,6 @@
 package uk.humbkr.xtream2jellyfin.streamhandler;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import uk.humbkr.xtream2jellyfin.config.GlobalSettings;
 import uk.humbkr.xtream2jellyfin.config.JellyfinConfig;
 import uk.humbkr.xtream2jellyfin.config.XtreamProviderConfig;
@@ -75,13 +74,9 @@ public class XtreamProcessor {
         this.ready = username != null && password != null;
 
         String fileManagerType = globalSettings.getFileManagerType();
-        if (StringUtils.isBlank(fileManagerType) || "simple".equalsIgnoreCase(fileManagerType)) {
-            this.fileManager = new SimpleFileManager(providerName, globalSettings.getMediaDir());
-            log.info("[{}] Using SimpleFileManager", providerName);
-        } else {
-            this.fileManager = new CachedFileManager(providerName, globalSettings.getMediaDir());
-            log.info("[{}] Using CachedFileManager", providerName);
-        }
+
+        this.fileManager = this.createFileManager(globalSettings);
+        log.info("Using file manager: {}", this.fileManager.getClass().getSimpleName());
 
         this.streamHandlers = new ArrayList<>();
         streamHandlers.add(new LiveStreamsHandler(config, fileManager, globalSettings));
@@ -89,6 +84,18 @@ public class XtreamProcessor {
         streamHandlers.add(new MoviesStreamsHandler(config, fileManager, globalSettings));
 
         this.runOnce = globalSettings.isRunOnce();
+    }
+
+    private FileManager createFileManager(GlobalSettings globalSettings) {
+        String fileManagerType = globalSettings.getFileManagerType();
+        String mediaDir = globalSettings.getMediaDir() + "/" + providerName;
+
+        if ("cached".equalsIgnoreCase(fileManagerType)) {
+            String cacheDir = globalSettings.getCacheDir() + "/" + providerName;
+            return new CachedFileManager(mediaDir, cacheDir);
+        } else {
+            return new SimpleFileManager(mediaDir);
+        }
     }
 
     public void processStreams() {
@@ -101,7 +108,7 @@ public class XtreamProcessor {
         do {
             try {
                 authenticate();
-                fileManager.onProcessStart();
+                fileManager.initialize();
 
                 List<BaseStreamsHandler> handlers = streamHandlers.stream()
                         .filter(handler -> handler.enabled)
@@ -111,7 +118,7 @@ public class XtreamProcessor {
                     streamHandler.process();
                 }
 
-                fileManager.onProcessEnd();
+                fileManager.complete();
                 postProcessing();
 
                 log.info("{} processing completed", providerName);

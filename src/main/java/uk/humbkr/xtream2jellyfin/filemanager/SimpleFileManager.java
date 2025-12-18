@@ -1,37 +1,27 @@
 package uk.humbkr.xtream2jellyfin.filemanager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import uk.humbkr.xtream2jellyfin.util.JsonUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Comparator;
-import java.util.stream.Stream;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 
 @Slf4j
-public class SimpleFileManager implements FileManager {
+public class SimpleFileManager extends BaseFileManager implements FileManager {
 
-    private final ObjectMapper objectMapper;
-
-    private final String mediaPath;
-
-    public SimpleFileManager(String providerName, String mediaDir) {
-        this.objectMapper = JsonUtils.getObjectMapper();
-        this.mediaPath = mediaDir + "/" + providerName;
+    public SimpleFileManager(String rootDir) {
+        super(rootDir);
     }
 
     @Override
-    public void onProcessStart() {
-        deleteDirectory(mediaPath);
-        log.info("Cleaned up library directory: {}", mediaPath);
+    public void initialize() {
+        this.deleteDirectory(rootDir);
+        log.info("Cleaned up directory: {}", rootDir);
     }
 
     @Override
-    public void onProcessEnd() {
+    public void complete() {
         // No-op: SimpleFileManager doesn't maintain a database
     }
 
@@ -64,16 +54,23 @@ public class SimpleFileManager implements FileManager {
         try {
             Path path = Paths.get(directoryPath);
             if (Files.exists(path)) {
-                try (Stream<Path> paths = Files.walk(path)) {
-                    paths.sorted(Comparator.reverseOrder())
-                            .forEach(p -> {
-                                try {
-                                    Files.delete(p);
-                                } catch (IOException e) {
-                                    log.error("Failed to delete: {}", p, e);
-                                }
-                            });
-                }
+                Files.walkFileTree(path,
+                        new SimpleFileVisitor<Path>() {
+                            @Override
+                            public FileVisitResult postVisitDirectory(
+                                    Path dir, IOException exc) throws IOException {
+                                Files.delete(dir);
+                                return FileVisitResult.CONTINUE;
+                            }
+
+                            @Override
+                            public FileVisitResult visitFile(
+                                    Path file, BasicFileAttributes attrs)
+                                    throws IOException {
+                                Files.delete(file);
+                                return FileVisitResult.CONTINUE;
+                            }
+                        });
                 log.debug("Deleted directory: {}", directoryPath);
             }
         } catch (IOException e) {
