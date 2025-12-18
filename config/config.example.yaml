@@ -1,0 +1,67 @@
+app:
+  run_once: false
+  file_manager_type: "simple"
+  media_dir: "media"
+  write_metadata_json: false
+
+providers:
+  provider1:
+    username: "your_username"
+    password: "your_password"
+    url: "http://your-xtream-server.com"
+    interval: 360  # minutes
+
+    # Category name cleanup patterns (applied to folder names)
+    # Jellyfin automatically handles: | -> -, & -> and, : removed, etc.
+    category_name_cleanup_patterns:
+      "^\\[.*\\]\\s*": ""  # Remove leading brackets
+      "\\s*\\[.*\\]$": ""  # Remove trailing brackets
+
+    # Optional: Jellyfin library refresh after sync
+    libraryRefresh:
+      enabled: true
+      protocol: "http"
+      hostname: "localhost"
+      port: 8096
+      token: "your_jellyfin_api_token"
+
+    settings:
+      live:
+        enabled: true
+        category_folder: true
+        use_server_info: false
+
+        # Stream name cleanup patterns
+        name_cleanup_patterns:
+          "^\\[.*\\]\\s*": ""
+          "\\s*\\[.*\\]$": ""
+
+        # Category filtering (use IDs from provider)
+        include_category_ids: []  # If set, only these categories are processed
+        exclude_category_ids: []  # Ignored if include_category_ids is set
+
+      movies:
+        enabled: true
+        category_folder: true
+        use_server_info: false
+
+        # Movie title cleanup patterns
+        name_cleanup_patterns:
+          "^\\[.*\\]\\s*": ""
+          "\\s*\\[.*\\]$": ""
+
+        include_category_ids: []
+        exclude_category_ids: []
+
+      series:
+        enabled: true
+        category_folder: true
+        use_server_info: false
+
+        # Series title cleanup patterns
+        name_cleanup_patterns:
+          "^\\[.*\\]\\s*": ""
+          "\\s*\\[.*\\]$": ""
+
+        include_category_ids: []
+        exclude_category_ids: []
