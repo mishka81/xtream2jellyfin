@@ -1,4 +1,4 @@
-package uk.humbkr.xtream2jellyfin.streamhandler.nameformat;
+package uk.humbkr.xtream2jellyfin.nameformat;
 
 import lombok.Builder;
 import lombok.Getter;

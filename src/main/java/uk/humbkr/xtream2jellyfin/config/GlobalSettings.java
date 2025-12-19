@@ -21,4 +21,7 @@ public class GlobalSettings {
     @JsonProperty("write_metadata_json")
     private boolean writeMetadataJson = false;
 
+    @JsonProperty("write_metadata_nfo")
+    private boolean writeMetadataNfo = true;
+
 }

@@ -33,3 +33,4 @@ media/
 Thumbs.db
 /.claude/
 /config/config.yaml
+/config/logback.xml

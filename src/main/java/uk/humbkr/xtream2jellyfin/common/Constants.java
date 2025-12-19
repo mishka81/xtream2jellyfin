@@ -1,4 +1,4 @@
-package uk.humbkr.xtream2jellyfin.constant;
+package uk.humbkr.xtream2jellyfin.common;
 
 import uk.humbkr.xtream2jellyfin.streamhandler.MediaType;
 import uk.humbkr.xtream2jellyfin.streamhandler.XtreamAction;
@@ -9,6 +9,8 @@ public class Constants {
 
     // Configuration
     public static final String CONFIG_FILE = "config/config.yaml";
+
+    public static final String LOGBACK_CONFIG_FILE = "config/logback.xml";
 
     // Directories
     public static final String CACHE_DIR = "cache";

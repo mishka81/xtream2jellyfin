@@ -4,12 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import uk.humbkr.xtream2jellyfin.util.JsonUtils;
+import uk.humbkr.xtream2jellyfin.common.JsonUtils;
 
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class BaseFileManager {
 
-    protected final ObjectMapper objectMapper = JsonUtils.getObjectMapper();
+    protected final ObjectMapper objectMapper = JsonUtils.initializeJsonMapper();
 
     @NonNull
     protected final String rootDir;

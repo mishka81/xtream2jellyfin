@@ -1,4 +1,4 @@
-package uk.humbkr.xtream2jellyfin.streamhandler.nameformat;
+package uk.humbkr.xtream2jellyfin.nameformat;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringSubstitutor;

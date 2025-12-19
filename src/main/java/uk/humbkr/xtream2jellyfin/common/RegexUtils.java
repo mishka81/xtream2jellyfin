@@ -1,4 +1,4 @@
-package uk.humbkr.xtream2jellyfin.util;
+package uk.humbkr.xtream2jellyfin.common;
 
 import lombok.NoArgsConstructor;
 

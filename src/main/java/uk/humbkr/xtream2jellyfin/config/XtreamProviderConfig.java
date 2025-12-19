@@ -3,7 +3,7 @@ package uk.humbkr.xtream2jellyfin.config;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import uk.humbkr.xtream2jellyfin.constant.Constants;
+import uk.humbkr.xtream2jellyfin.common.Constants;
 
 import java.util.HashMap;
 import java.util.Map;

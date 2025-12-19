@@ -5,7 +5,8 @@ import org.apache.commons.lang3.StringUtils;
 import uk.humbkr.xtream2jellyfin.config.GlobalSettings;
 import uk.humbkr.xtream2jellyfin.config.XtreamProviderConfig;
 import uk.humbkr.xtream2jellyfin.filemanager.FileManager;
-import uk.humbkr.xtream2jellyfin.streamhandler.nameformat.StreamNameFormatContext;
+import uk.humbkr.xtream2jellyfin.metadata.NfoGenerator;
+import uk.humbkr.xtream2jellyfin.nameformat.StreamNameFormatContext;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -104,7 +105,15 @@ public class SeriesStreamsHandler extends BaseStreamsHandler {
                     addFile(streamInfoPath, stream, date);
                 }
 
+                // Generate and write tvshow.nfo
                 String basePath = StringUtils.substringBeforeLast(streamInfoPath, "/");
+                if (writeMetadataNfo) {
+                    String nfoPath = basePath + "/tvshow.nfo";
+                    String nfoContent = NfoGenerator.generateTvShowNfo(stream);
+                    if (nfoContent != null) {
+                        addFile(nfoPath, nfoContent, date);
+                    }
+                }
 
                 @SuppressWarnings("unchecked")
                 Map<String, List<Map<String, Object>>> episodesData = (Map<String, List<Map<String, Object>>>) stream.get("episodes");
@@ -157,6 +166,15 @@ public class SeriesStreamsHandler extends BaseStreamsHandler {
             Instant date = Instant.ofEpochSecond(addedTimestamp);
 
             addFile(episodeFilePath, episodeStreamUrl, date);
+
+            // Generate and write episode NFO
+            if (writeMetadataNfo) {
+                String episodeNfoPath = basePath + "/" + seasonDir + "/" + episodeFile + ".nfo";
+                String episodeNfoContent = NfoGenerator.generateEpisodeNfo(episode);
+                if (episodeNfoContent != null) {
+                    addFile(episodeNfoPath, episodeNfoContent, date);
+                }
+            }
 
         } catch (Exception ex) {
             logError("Failed to process series, Series: " + seriesName +

@@ -2,7 +2,7 @@ package uk.humbkr.xtream2jellyfin.filemanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import uk.humbkr.xtream2jellyfin.util.JsonUtils;
+import uk.humbkr.xtream2jellyfin.common.JsonUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -38,7 +38,7 @@ public class FileManagerUtils {
             String content = Files.readString(filePath, StandardCharsets.UTF_8);
 
             if (path.endsWith(".json")) {
-                ObjectMapper mapper = JsonUtils.getObjectMapper();
+                ObjectMapper mapper = JsonUtils.initializeJsonMapper();
                 return mapper.readValue(content, Object.class);
             }
 

@@ -3,6 +3,7 @@ package uk.humbkr.xtream2jellyfin.streamhandler.nameformat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import uk.humbkr.xtream2jellyfin.nameformat.CategoryNameFormat;
 
 import java.util.HashMap;
 import java.util.Map;

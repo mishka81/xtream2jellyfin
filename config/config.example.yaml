@@ -3,6 +3,7 @@ app:
   file_manager_type: "simple"
   media_dir: "media"
   write_metadata_json: false
+  write_metadata_nfo: true
 
 providers:
   provider1:

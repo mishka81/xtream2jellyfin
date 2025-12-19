@@ -4,7 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import uk.humbkr.xtream2jellyfin.config.GlobalSettings;
 import uk.humbkr.xtream2jellyfin.config.XtreamProviderConfig;
 import uk.humbkr.xtream2jellyfin.filemanager.FileManager;
-import uk.humbkr.xtream2jellyfin.streamhandler.nameformat.StreamNameFormatContext;
+import uk.humbkr.xtream2jellyfin.metadata.NfoGenerator;
+import uk.humbkr.xtream2jellyfin.nameformat.StreamNameFormatContext;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -86,6 +87,15 @@ public class MoviesStreamsHandler extends BaseStreamsHandler {
         addFile(streamFile, streamUrl, date);
         if (writeMetadataJson) {
             addFile(streamDataFile, movieStream, date);
+        }
+
+        // Generate and write movie NFO
+        if (writeMetadataNfo) {
+            String nfoFile = baseFilePath + ".nfo";
+            String nfoContent = NfoGenerator.generateMovieNfo(movieStream);
+            if (nfoContent != null) {
+                addFile(nfoFile, nfoContent, date);
+            }
         }
     }
 

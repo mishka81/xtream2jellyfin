@@ -6,10 +6,6 @@
         </encoder>
     </appender>
 
-    <logger name="io.prometheus" level="WARN"/>
-    <logger name="uk.humbkr.xtream2jellyfin.Xtream2JellyfinApp" level="INFO"/>
-    <logger name="uk.humbkr.xtream2jellyfin.streamhandler.SeriesStreamsHandler" level="INFO"/>
-
     <root level="${DEBUG:-INFO}">
         <appender-ref ref="STDOUT"/>
     </root>

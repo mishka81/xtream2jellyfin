@@ -26,7 +26,7 @@ public class SimpleFileManager extends BaseFileManager implements FileManager {
     }
 
     @Override
-    public void save(String path, Object content, String date) {
+    public void save(String path, Object content, String dakte) {
         try {
             Path filePath = Paths.get(path);
             FileManagerUtils.prepareDirectory(filePath.getParent().toString());

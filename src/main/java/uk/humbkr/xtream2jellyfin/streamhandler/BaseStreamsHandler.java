@@ -3,16 +3,16 @@ package uk.humbkr.xtream2jellyfin.streamhandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
+import uk.humbkr.xtream2jellyfin.common.Constants;
+import uk.humbkr.xtream2jellyfin.common.JsonUtils;
+import uk.humbkr.xtream2jellyfin.common.RegexUtils;
 import uk.humbkr.xtream2jellyfin.config.GlobalSettings;
 import uk.humbkr.xtream2jellyfin.config.MediaSettings;
 import uk.humbkr.xtream2jellyfin.config.XtreamProviderConfig;
-import uk.humbkr.xtream2jellyfin.constant.Constants;
 import uk.humbkr.xtream2jellyfin.filemanager.FileManager;
 import uk.humbkr.xtream2jellyfin.filemanager.FileManagerUtils;
-import uk.humbkr.xtream2jellyfin.streamhandler.nameformat.CategoryNameFormat;
-import uk.humbkr.xtream2jellyfin.streamhandler.nameformat.StreamNameFormat;
-import uk.humbkr.xtream2jellyfin.util.JsonUtils;
-import uk.humbkr.xtream2jellyfin.util.RegexUtils;
+import uk.humbkr.xtream2jellyfin.nameformat.CategoryNameFormat;
+import uk.humbkr.xtream2jellyfin.nameformat.StreamNameFormat;
 
 import java.io.IOException;
 import java.net.URI;
@@ -48,6 +48,8 @@ public abstract class BaseStreamsHandler {
     protected final boolean categoryFolder;
 
     protected final boolean writeMetadataJson;
+
+    protected final boolean writeMetadataNfo;
 
     protected final boolean useServerInfo;
 
@@ -88,7 +90,7 @@ public abstract class BaseStreamsHandler {
     public BaseStreamsHandler(XtreamProviderConfig providerConfig, FileManager fileManager,
                               GlobalSettings globalSettings, Logger log) {
         this.log = log;
-        this.objectMapper = JsonUtils.getObjectMapper();
+        this.objectMapper = JsonUtils.initializeJsonMapper();
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(30))
                 .build();
@@ -96,6 +98,7 @@ public abstract class BaseStreamsHandler {
         this.fileManager = fileManager;
         this.providerName = Objects.requireNonNull(providerConfig.getName());
         this.writeMetadataJson = globalSettings.isWriteMetadataJson();
+        this.writeMetadataNfo = globalSettings.isWriteMetadataNfo();
 
         this.username = providerConfig.getUsername();
         this.password = providerConfig.getPassword();
