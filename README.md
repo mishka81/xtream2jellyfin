@@ -1,18 +1,17 @@
 # Xtream2Jellyfin
 
-IPTV stream converter for Jellyfin.
+Import IPTV streams in Jellyfin.
 
-**<!> Work in progress**
+:construction: **WORK IN PROGRESS :construction:**
 
 ## Overview
 
-`xtream2jellyfin` is a Java-based IPTV stream converter that bridges Xtream Codes IPTV providers with media servers like Jellyfin. It converts IPTV content from Xtream API endpoints into organized file structures (STRM and JSON files) that media servers can consume.
+`xtream2jellyfin` is a Java-based IPTV stream converter that bridges Xtream Codes IPTV providers with Jellyfin. It converts IPTV VOD content (series, movies) from Xtream API endpoints into organized file structures (STRM, NFO and JSON files) that Jellyfin can consume.
 
 ## Features
 
 - multi-provider support: handle multiple IPTV providers simultaneously
 - content types:
-  - live TV channels with M3U playlists and EPG (Electronic Program Guide)
   - movies (VOD) with .strm files and optional metadata
   - TV series with organized season/episode structures
 - flexible configuration: per-media-type settings with regex-based name cleaning and category filtering
